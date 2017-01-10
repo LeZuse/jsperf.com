@@ -22,9 +22,14 @@ exports.register = function (server, options, next) {
           let page = values[0];
           page.test = values[1];
           page.revision = values[2];
-          const own = request.yar.get('own') || {};
-          const isOwn = own[page.id];
+          const isOwn = request.auth.credentials.email === page.authorEmail;
           const isAdmin = request.yar.get('admin');
+
+          // alias testID as id
+          page.test = page.test.map(function (test) {
+            test.id = test.testID;
+            return test;
+          });
 
           reply.view('edit/index', {
             headTitle: page.title,
@@ -111,8 +116,7 @@ exports.register = function (server, options, next) {
 
           pagesService.getBySlug(request.params.testSlug, request.params.rev).then(values => {
             page = values[0];
-            const own = request.yar.get('own') || {};
-            isOwn = own[page.id];
+            isOwn = request.auth.credentials.email === page.authorEmail;
             const isAdmin = request.yar.get('admin');
             let update = !!(isAdmin || isOwn);
             return pagesService.edit(payload, update, page.maxRev, page.id);
